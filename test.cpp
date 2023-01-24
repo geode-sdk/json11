@@ -252,6 +252,33 @@ JSON11_TEST_CASE(json11_test) {
 
 }
 
+struct FooBar {
+  int x;
+};
+
+json11::Json to_json(const FooBar& foo) {
+  return Json::object { { "x", foo.x } };
+}
+
+void from_json(const Json& json, FooBar& out) {
+  out = FooBar {
+    json.get<int>("x")
+  };
+}
+
+JSON11_TEST_CASE(json11_test_geode) {
+  FooBar foo { 
+    .x = 23
+  };
+  Json object(foo);
+  std::cout << "foo: " << object.dump() << std::endl;
+
+  auto bar = object.as<FooBar>();
+
+  std::cout << "bar.x: " << bar.x << std::endl;
+}
+
+
 #if JSON11_TEST_STANDALONE_MAIN
 
 static void parse_from_stdin() {
@@ -277,6 +304,7 @@ int main(int argc, char **argv) {
     }
 
     json11_test();
+    json11_test_geode();
 }
 
 #endif // JSON11_TEST_STANDALONE_MAIN

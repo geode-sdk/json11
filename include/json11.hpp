@@ -133,6 +133,10 @@ public:
     Json(const object &values);     // OBJECT
     Json(object &&values);          // OBJECT
 
+    template <class T>
+    requires requires(const T& value) { to_json(value); }
+    Json(const T& value) : Json(to_json(value)) {}
+
     // Implicit constructor: anything with a to_json() function.
     template <class T, class = decltype(&T::to_json)>
     Json(const T & t) : Json(t.to_json()) {}
@@ -198,6 +202,10 @@ public:
             return this->array_items();
         } else if constexpr (std::is_same_v<T, object>) {
             return this->object_items();
+        } else if constexpr (std::is_default_constructible_v<T> && requires(const Json& json, T& value) { from_json(json, value); }) {
+            T value;
+            from_json(*this, value);
+            return value;
         }
     }
 
