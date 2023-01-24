@@ -83,9 +83,41 @@ public:
         NUL, NUMBER, BOOL, STRING, ARRAY, OBJECT
     };
 
-    // Array and object typedefs
-    typedef std::vector<Json> array;
-    typedef std::map<std::string, Json> object;
+    using array = std::vector<Json>;
+
+    class object final {
+        using value_type = std::pair<std::string, Json>;
+        using iterator = typename std::vector<value_type>::iterator;
+        using const_iterator = typename std::vector<value_type>::const_iterator;
+        std::vector<value_type> m_data;
+    public:
+        object() = default;
+        object(const object&);
+        object(object&&);
+        template <class It>
+        object(It first, It last) : m_data(first, last) {}
+        object(std::initializer_list<value_type> init);
+
+        size_t size() const { return m_data.size(); }
+        bool empty() const { return m_data.empty(); }
+
+        Json& operator[](const std::string& key);
+        iterator begin();
+        iterator end();
+        const_iterator begin() const;
+        const_iterator cbegin() const;
+        const_iterator end() const;
+        const_iterator cend() const;
+
+        iterator find(const std::string& key);
+        const_iterator find(const std::string& key) const;
+
+        std::pair<iterator, bool> insert(const value_type& value);
+        size_t count(const std::string& key) const;
+
+        bool operator==(const object& other) const;
+        bool operator<(const object& other) const;
+    };
 
     // Constructors for the various types of JSON value.
     Json() noexcept;                // NUL
@@ -164,16 +196,6 @@ public:
     static Json parse(const std::string & in,
                       std::string & err,
                       JsonParse strategy = JsonParse::STANDARD);
-    static Json parse(const char * in,
-                      std::string & err,
-                      JsonParse strategy = JsonParse::STANDARD) {
-        if (in) {
-            return parse(std::string(in), err, strategy);
-        } else {
-            err = "null input";
-            return nullptr;
-        }
-    }
     // Parse multiple objects, concatenated or separated by whitespace
     static std::vector<Json> parse_multi(
         const std::string & in,

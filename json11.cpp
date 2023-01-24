@@ -231,7 +231,7 @@ struct Statics {
     const std::shared_ptr<JsonValue> f = make_shared<JsonBoolean>(false);
     const string empty_string;
     const vector<Json> empty_vector;
-    const map<string, Json> empty_map;
+    const Json::object empty_map;
     Statics() {}
 };
 
@@ -273,7 +273,7 @@ int Json::int_value()                             const { return m_ptr->int_valu
 bool Json::bool_value()                           const { return m_ptr->bool_value();   }
 const string & Json::string_value()               const { return m_ptr->string_value(); }
 const vector<Json> & Json::array_items()          const { return m_ptr->array_items();  }
-const map<string, Json> & Json::object_items()    const { return m_ptr->object_items(); }
+const Json::object & Json::object_items()         const { return m_ptr->object_items(); }
 const Json & Json::operator[] (size_t i)          const { return (*m_ptr)[i];           }
 const Json & Json::operator[] (const string &key) const { return (*m_ptr)[key];         }
 
@@ -282,7 +282,7 @@ int                       JsonValue::int_value()                 const { return 
 bool                      JsonValue::bool_value()                const { return false; }
 const string &            JsonValue::string_value()              const { return statics().empty_string; }
 const vector<Json> &      JsonValue::array_items()               const { return statics().empty_vector; }
-const map<string, Json> & JsonValue::object_items()              const { return statics().empty_map; }
+const Json::object &      JsonValue::object_items()              const { return statics().empty_map; }
 const Json &              JsonValue::operator[] (size_t)         const { return static_null(); }
 const Json &              JsonValue::operator[] (const string &) const { return static_null(); }
 
@@ -785,6 +785,60 @@ bool Json::has_shape(const shape & types, string & err) const {
     }
 
     return true;
+}
+
+// Json& operator[](const std::string& key);
+
+Json::object::object(const object& object) : m_data(object.m_data) {}
+Json::object::object(object&& object) : m_data(std::move(object.m_data)) {}
+Json::object::object(std::initializer_list<value_type> init) : m_data(init) {}
+
+Json::object::iterator Json::object::begin() { return m_data.begin(); }
+Json::object::iterator Json::object::end() { return m_data.end(); }
+Json::object::const_iterator Json::object::begin() const { return m_data.begin(); }
+Json::object::const_iterator Json::object::end() const { return m_data.end(); }
+Json::object::const_iterator Json::object::cbegin() const { return m_data.cbegin(); }
+Json::object::const_iterator Json::object::cend() const { return m_data.cend(); }
+
+bool Json::object::operator==(const Json::object& other) const { return m_data == other.m_data; }
+bool Json::object::operator<(const Json::object& other) const { return m_data < other.m_data; }
+
+Json::object::iterator Json::object::find(const std::string& key) {
+    auto end = this->end();
+    for (auto it = this->begin(); it != end; ++it) {
+        if (it->first == key) return it;
+    }
+    return end;
+}
+
+Json::object::const_iterator Json::object::find(const std::string& key) const {
+    auto end = this->cend();
+    for (auto it = this->cbegin(); it != end; ++it) {
+        if (it->first == key) return it;
+    }
+    return end;
+}
+
+std::pair<Json::object::iterator, bool> Json::object::insert(const Json::object::value_type& value) {
+    if (auto it = this->find(value.first); it != this->end()) {
+        return {it, false};
+    } else {
+        m_data.push_back(value);
+        return {--m_data.end(), true};
+    }
+}
+
+size_t Json::object::count(const std::string& key) const {
+    return this->find(key) == this->end() ? 0 : 1;
+}
+
+Json& Json::object::operator[](const std::string& key) {
+    if (auto it = this->find(key); it != this->end()) {
+        return it->second;
+    } else {
+        m_data.push_back({key, Json()});
+        return m_data.back().second;
+    }
 }
 
 } // namespace json11
