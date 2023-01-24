@@ -205,6 +205,7 @@ class JsonArray final : public Value<Json::ARRAY, Json::array> {
     const Json::array &array_items() const override { return m_value; }
     Json::array& array_items() override { return m_value; }
     const Json & operator[](size_t i) const override;
+    Json & operator[](size_t i) override;
 public:
     explicit JsonArray(const Json::array &value) : Value(value) {}
     explicit JsonArray(Json::array &&value)      : Value(move(value)) {}
@@ -214,6 +215,7 @@ class JsonObject final : public Value<Json::OBJECT, Json::object> {
     const Json::object &object_items() const override { return m_value; }
     Json::object &object_items() override { return m_value; }
     const Json & operator[](const string &key) const override;
+    Json & operator[](const string &key) override;
 public:
     explicit JsonObject(const Json::object &value) : Value(value) {}
     explicit JsonObject(Json::object &&value)      : Value(move(value)) {}
@@ -279,25 +281,40 @@ Json::array & Json::array_items()                       { return m_ptr->array_it
 const Json::object & Json::object_items()         const { return m_ptr->object_items(); }
 Json::object & Json::object_items()                     { return m_ptr->object_items(); }
 const Json & Json::operator[] (size_t i)          const { return (*m_ptr)[i];           }
+Json & Json::operator[] (size_t i)                      { return (*m_ptr)[i];           }
 const Json & Json::operator[] (const string &key) const { return (*m_ptr)[key];         }
+Json & Json::operator[] (const string &key)             { return (*m_ptr)[key];         }
 
-double                    JsonValue::number_value()              const { return 0; }
-int                       JsonValue::int_value()                 const { return 0; }
-bool                      JsonValue::bool_value()                const { return false; }
-const string &            JsonValue::string_value()              const { return statics().empty_string; }
+double                    JsonValue::number_value()              const { throw JsonException("not a number"); }
+int                       JsonValue::int_value()                 const { throw JsonException("not a number"); }
+bool                      JsonValue::bool_value()                const { throw JsonException("not a bool"); }
+const string &            JsonValue::string_value()              const { throw JsonException("not a string"); }
 const Json::array &       JsonValue::array_items()               const { throw JsonException("not an array"); }
 Json::array &             JsonValue::array_items()                     { throw JsonException("not an array"); }
 const Json::object &      JsonValue::object_items()              const { throw JsonException("not an object"); }
 Json::object &            JsonValue::object_items()                    { throw JsonException("not an object"); }
-const Json &              JsonValue::operator[] (size_t)         const { return static_null(); }
-const Json &              JsonValue::operator[] (const string &) const { return static_null(); }
+const Json &              JsonValue::operator[] (size_t)         const { throw JsonException("not an array"); }
+Json &                    JsonValue::operator[] (size_t)               { throw JsonException("not an array"); }
+const Json &              JsonValue::operator[] (const string &) const { throw JsonException("not an object"); }
+Json &                    JsonValue::operator[] (const string &)       { throw JsonException("not an object"); }
 
-const Json & JsonObject::operator[] (const string &key) const {
+const Json& JsonObject::operator[] (const string &key) const {
     auto iter = m_value.find(key);
-    return (iter == m_value.end()) ? static_null() : iter->second;
+    if (iter == m_value.end()) {
+        throw JsonException("invalid key");
+    } else {
+        return iter->second;
+    }
+}
+Json& JsonObject::operator[] (const string &key) {
+    return m_value[key];
 }
 const Json & JsonArray::operator[] (size_t i) const {
-    if (i >= m_value.size()) return static_null();
+    if (i >= m_value.size()) throw JsonException("index out of bounds");
+    else return m_value[i];
+}
+Json& JsonArray::operator[] (size_t i) {
+    if (i >= m_value.size()) throw JsonException("index out of bounds");
     else return m_value[i];
 }
 

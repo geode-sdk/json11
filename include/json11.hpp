@@ -193,9 +193,11 @@ public:
     object& object_items();
 
     // Return a reference to arr[i] if this is an array, Json() otherwise.
-    const Json & operator[](size_t i) const;
+    const Json& operator[](size_t i) const;
+    Json& operator[](size_t i);
     // Return a reference to obj[key] if this is an object, Json() otherwise.
-    const Json & operator[](const std::string &key) const;
+    const Json& operator[](const std::string &key) const;
+    Json& operator[](const std::string& key);
 
     template <class T>
     decltype(auto) as() const {
@@ -243,6 +245,12 @@ public:
 
     template <class T, class Key>
     decltype(auto) get(Key&& key_or_index) const {
+        const auto value = this->operator[](std::forward<Key>(key_or_index));
+        return value.template as<T>();
+    }
+
+    template <class T, class Key>
+    decltype(auto) get(Key&& key_or_index) {
         const auto value = this->operator[](std::forward<Key>(key_or_index));
         return value.template as<T>();
     }
@@ -310,9 +318,11 @@ protected:
     virtual const Json::array &array_items() const;
     virtual Json::array &array_items();
     virtual const Json &operator[](size_t i) const;
+    virtual Json &operator[](size_t i);
     virtual const Json::object &object_items() const;
     virtual Json::object &object_items();
     virtual const Json &operator[](const std::string &key) const;
+    virtual Json &operator[](const std::string &key);
     virtual ~JsonValue() {}
 };
 
