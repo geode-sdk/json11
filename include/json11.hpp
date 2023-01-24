@@ -184,6 +184,41 @@ public:
     // Return a reference to obj[key] if this is an object, Json() otherwise.
     const Json & operator[](const std::string &key) const;
 
+    template <class T>
+    decltype(auto) as() const {
+        if constexpr (std::is_same_v<T, bool>) {
+            return this->bool_value();
+        } else if constexpr (std::is_integral_v<T>) {
+            return this->int_value();
+        } else if constexpr (std::is_floating_point_v<T>) {
+            return this->number_value();
+        } else if constexpr (std::is_constructible_v<std::string, T>) {
+            return this->string_value();
+        } else if constexpr (std::is_same_v<T, array>) {
+            return this->array_items();
+        } else if constexpr (std::is_same_v<T, object>) {
+            return this->object_items();
+        }
+    }
+
+    template <class T>
+    bool is() const {
+        switch (type()) {
+            case Json::Type::ARRAY: return std::is_same_v<T, array>;
+            case Json::Type::OBJECT: return std::is_same_v<T, object>;
+            case Json::Type::STRING: return std::is_constructible_v<std::string, T>;
+            case Json::Type::NUMBER: return std::is_integral_v<T> || std::is_floating_point_v<T>;
+            case Json::Type::BOOL: return std::is_same_v<T, bool>;
+            case Json::Type::NUL: return false;
+        }
+    }
+
+    template <class T, class Key>
+    decltype(auto) get(Key&& key_or_index) const {
+        const auto value = this->operator[](std::forward<Key>(key_or_index));
+        return value.template as<T>();
+    }
+
     // Serialize.
     void dump(std::string &out) const;
     std::string dump() const {
