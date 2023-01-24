@@ -267,15 +267,33 @@ void from_json(const Json& json, FooBar& out) {
 }
 
 JSON11_TEST_CASE(json11_test_geode) {
-  FooBar foo { 
-    .x = 23
-  };
-  Json object(foo);
-  std::cout << "foo: " << object.dump() << std::endl;
+  {
+    FooBar foo { 
+      .x = 23
+    };
+    Json object(foo);
+    std::cout << "foo: " << object.dump() << std::endl;
 
-  auto bar = object.as<FooBar>();
+    auto bar = object.as<FooBar>();
 
-  std::cout << "bar.x: " << bar.x << std::endl;
+    std::cout << "bar.x: " << bar.x << std::endl;
+  }
+
+  {
+    Json foo { Json::object { { "hello", "world" } } };
+    std::cout << foo.dump() << std::endl;
+    foo.as<Json::object>()["hello"] = 23;
+    std::cout << foo.dump() << std::endl;
+  }
+
+  {
+    Json foo { Json::object { { "hello", "world" } } };
+    try {
+      foo.get<Json::object>("hello");
+    } catch (const JsonException& err) {
+      std::cout << "error.what(): " << err.what() << std::endl;
+    }
+  }
 }
 
 

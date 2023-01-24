@@ -55,6 +55,7 @@
 #include <map>
 #include <memory>
 #include <initializer_list>
+#include <stdexcept>
 
 #ifdef _MSC_VER
     #if _MSC_VER <= 1800 // VS 2013
@@ -72,6 +73,12 @@ namespace json11 {
 
 enum JsonParse {
     STANDARD, COMMENTS
+};
+
+class JsonException : public std::runtime_error {
+public:
+    template <class T>
+    JsonException(T&& value) : std::runtime_error(std::forward<T>(value)) {}
 };
 
 class JsonValue;
@@ -180,8 +187,10 @@ public:
     const std::string &string_value() const;
     // Return the enclosed std::vector if this is an array, or an empty vector otherwise.
     const array &array_items() const;
+    array& array_items();
     // Return the enclosed std::map if this is an object, or an empty map otherwise.
     const object &object_items() const;
+    object& object_items();
 
     // Return a reference to arr[i] if this is an array, Json() otherwise.
     const Json & operator[](size_t i) const;
@@ -206,6 +215,17 @@ public:
             T value;
             from_json(*this, value);
             return value;
+        }
+    }
+
+    template <class T>
+    decltype(auto) as() {
+        if constexpr (std::is_same_v<T, array>) {
+            return this->array_items();
+        } else if constexpr (std::is_same_v<T, object>) {
+            return this->object_items();
+        } else {
+            return static_cast<const Json*>(this)->as<T>();
         }
     }
 
@@ -288,8 +308,10 @@ protected:
     virtual bool bool_value() const;
     virtual const std::string &string_value() const;
     virtual const Json::array &array_items() const;
+    virtual Json::array &array_items();
     virtual const Json &operator[](size_t i) const;
     virtual const Json::object &object_items() const;
+    virtual Json::object &object_items();
     virtual const Json &operator[](const std::string &key) const;
     virtual ~JsonValue() {}
 };

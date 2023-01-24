@@ -166,7 +166,7 @@ protected:
         return m_value < static_cast<const Value<tag, T> *>(other)->m_value;
     }
 
-    const T m_value;
+    T m_value;
     void dump(string &out) const override { json11::dump(m_value, out); }
 };
 
@@ -203,6 +203,7 @@ public:
 
 class JsonArray final : public Value<Json::ARRAY, Json::array> {
     const Json::array &array_items() const override { return m_value; }
+    Json::array& array_items() override { return m_value; }
     const Json & operator[](size_t i) const override;
 public:
     explicit JsonArray(const Json::array &value) : Value(value) {}
@@ -211,6 +212,7 @@ public:
 
 class JsonObject final : public Value<Json::OBJECT, Json::object> {
     const Json::object &object_items() const override { return m_value; }
+    Json::object &object_items() override { return m_value; }
     const Json & operator[](const string &key) const override;
 public:
     explicit JsonObject(const Json::object &value) : Value(value) {}
@@ -272,8 +274,10 @@ double Json::number_value()                       const { return m_ptr->number_v
 int Json::int_value()                             const { return m_ptr->int_value();    }
 bool Json::bool_value()                           const { return m_ptr->bool_value();   }
 const string & Json::string_value()               const { return m_ptr->string_value(); }
-const vector<Json> & Json::array_items()          const { return m_ptr->array_items();  }
+const Json::array & Json::array_items()           const { return m_ptr->array_items();  }
+Json::array & Json::array_items()                       { return m_ptr->array_items();  }
 const Json::object & Json::object_items()         const { return m_ptr->object_items(); }
+Json::object & Json::object_items()                     { return m_ptr->object_items(); }
 const Json & Json::operator[] (size_t i)          const { return (*m_ptr)[i];           }
 const Json & Json::operator[] (const string &key) const { return (*m_ptr)[key];         }
 
@@ -281,8 +285,10 @@ double                    JsonValue::number_value()              const { return 
 int                       JsonValue::int_value()                 const { return 0; }
 bool                      JsonValue::bool_value()                const { return false; }
 const string &            JsonValue::string_value()              const { return statics().empty_string; }
-const vector<Json> &      JsonValue::array_items()               const { return statics().empty_vector; }
-const Json::object &      JsonValue::object_items()              const { return statics().empty_map; }
+const Json::array &       JsonValue::array_items()               const { throw JsonException("not an array"); }
+Json::array &             JsonValue::array_items()                     { throw JsonException("not an array"); }
+const Json::object &      JsonValue::object_items()              const { throw JsonException("not an object"); }
+Json::object &            JsonValue::object_items()                    { throw JsonException("not an object"); }
 const Json &              JsonValue::operator[] (size_t)         const { return static_null(); }
 const Json &              JsonValue::operator[] (const string &) const { return static_null(); }
 
