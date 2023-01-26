@@ -73,6 +73,9 @@ JSON11_TEST_CASE(json11_test) {
         std::cout << "    - " << k.dump() << "\n";
     }
 
+    int64_t value = 50;
+    auto comp = Json(value);
+
     string comment_test = R"({
       // comment /* with nested comment */
       "a": 1,

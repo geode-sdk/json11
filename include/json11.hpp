@@ -140,6 +140,9 @@ public:
     Json(const object &values);     // OBJECT
     Json(object &&values);          // OBJECT
 
+    template <typename T> requires std::is_integral_v<T>
+    Json(const T& value) : Json(static_cast<double>(value)) {}
+
     template <class T>
     requires requires(const T& value) { to_json(value); }
     Json(const T& value) : Json(to_json(value)) {}
