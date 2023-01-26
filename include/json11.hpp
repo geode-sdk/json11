@@ -267,6 +267,10 @@ public:
     static Json parse(const std::string & in,
                       std::string & err,
                       JsonParse strategy = JsonParse::STANDARD);
+
+    // Parse. If parse fails, throw an exception
+    static Json try_parse(const std::string & in, JsonParse strategy = JsonParse::STANDARD);
+
     // Parse multiple objects, concatenated or separated by whitespace
     static std::vector<Json> parse_multi(
         const std::string & in,

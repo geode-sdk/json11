@@ -766,6 +766,17 @@ Json Json::parse(const string &in, string &err, JsonParse strategy) {
     return result;
 }
 
+Json Json::try_parse(const string &in, JsonParse strategy) {
+    std::string err;
+
+    Json output = Json::parse(in, err, strategy);
+
+    if (!err.empty())
+        throw JsonException(err);
+
+    return output;
+}
+
 // Documented in json11.hpp
 vector<Json> Json::parse_multi(const string &in,
                                std::string::size_type &parser_stop_pos,
